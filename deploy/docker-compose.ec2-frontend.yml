@@ -1,0 +1,10 @@
+services:
+  frontend:
+    image: ${DOCKER_USERNAME}/frontend-despacho:latest
+    container_name: frontend-despacho
+    ports:
+      - "3000:3000"
+    environment:
+      BACKEND_VENTAS_HOST: ${BACKEND_VENTAS_HOST}
+      BACKEND_DESPACHO_HOST: ${BACKEND_DESPACHO_HOST}
+    restart: unless-stopped

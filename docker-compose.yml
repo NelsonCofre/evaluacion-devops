@@ -1,0 +1,104 @@
+# Stack completo - Innovatech Chile EP2
+# cp .env.example .env && docker compose up --build -d
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-despacho
+    ports:
+      - "${MYSQL_PORT:-3307}:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-rootpass}
+      MYSQL_DATABASE: ${DB_NAME:-despacho_db}
+      MYSQL_USER: ${DB_USERNAME:-despacho_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-despacho_pass}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-rootpass}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - despacho-network
+
+  ventas:
+    build:
+      context: ./back-Ventas_SpringBoot/Springboot-API-REST
+      dockerfile: Dockerfile
+    container_name: ventas-service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      DB_ENDPOINT: ${DB_ENDPOINT:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-despacho_db}
+      DB_USERNAME: ${DB_USERNAME:-despacho_user}
+      DB_PASSWORD: ${DB_PASSWORD:-despacho_pass}
+    volumes:
+      - ventas_logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - despacho-network
+
+  despacho:
+    build:
+      context: ./back-Despachos_SpringBoot/Springboot-API-REST-DESPACHO
+      dockerfile: Dockerfile
+    container_name: despacho-service
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-prod}
+      DB_ENDPOINT: ${DB_ENDPOINT:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME:-despacho_db}
+      DB_USERNAME: ${DB_USERNAME:-despacho_user}
+      DB_PASSWORD: ${DB_PASSWORD:-despacho_pass}
+    volumes:
+      - despacho_logs:/app/logs
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ventas:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - despacho-network
+
+  frontend:
+    build:
+      context: ./front_despacho
+      dockerfile: Dockerfile
+    container_name: frontend-despacho
+    ports:
+      - "3000:3000"
+    environment:
+      BACKEND_VENTAS_HOST: ${BACKEND_VENTAS_HOST:-ventas:8081}
+      BACKEND_DESPACHO_HOST: ${BACKEND_DESPACHO_HOST:-despacho:8082}
+    depends_on:
+      - ventas
+      - despacho
+    restart: unless-stopped
+    networks:
+      - despacho-network
+
+networks:
+  despacho-network:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+  ventas_logs:
+    driver: local
+  despacho_logs:
+    driver: local

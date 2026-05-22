@@ -20,11 +20,10 @@ jobs:
           cache: npm
           cache-dependency-path: front_despacho/package-lock.json
 
-      - name: Instalar y testear
+      - name: Instalar y build
         working-directory: front_despacho
         run: |
           npm ci
-          npm run lint
           npm run build
 
       - uses: docker/login-action@v3

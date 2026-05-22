@@ -39,34 +39,24 @@ jobs:
             ${{ secrets.DOCKER_USERNAME }}/frontend-despacho:latest
             ${{ secrets.DOCKER_USERNAME }}/frontend-despacho:${{ github.sha }}
 
-      - name: Preparar llave SSH
+      - name: Desplegar en EC2 Frontend
         env:
           SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-        run: |
-          printf '%s\n' "$SSH_KEY" > deploy_key.pem
-          chmod 600 deploy_key.pem
-
-      - uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.EC2_FRONTEND_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key_path: deploy_key.pem
-          port: 22
-          source: "deploy/docker-compose.ec2-frontend.yml,deploy/scripts/deploy-frontend-ec2.sh"
-          target: "/home/${{ secrets.EC2_USER }}/app"
-
-      - uses: appleboy/ssh-action@v1.0.3
-        env:
+          EC2_HOST: ${{ secrets.EC2_FRONTEND_HOST }}
+          EC2_USER: ${{ secrets.EC2_USER }}
           DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
           DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
           BACKEND_VENTAS_HOST: ${{ secrets.BACKEND_VENTAS_HOST }}
           BACKEND_DESPACHO_HOST: ${{ secrets.BACKEND_DESPACHO_HOST }}
-        with:
-          host: ${{ secrets.EC2_FRONTEND_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key_path: deploy_key.pem
-          port: 22
-          envs: DOCKER_USERNAME,DOCKER_PASSWORD,BACKEND_VENTAS_HOST,BACKEND_DESPACHO_HOST
-          script: |
-            chmod +x /home/${{ secrets.EC2_USER }}/app/deploy/scripts/deploy-frontend-ec2.sh
-            /home/${{ secrets.EC2_USER }}/app/deploy/scripts/deploy-frontend-ec2.sh
+        run: |
+          printf '%s\n' "$SSH_KEY" > deploy_key.pem
+          chmod 600 deploy_key.pem
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "$EC2_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          ssh -i deploy_key.pem -o StrictHostKeyChecking=yes "${EC2_USER}@${EC2_HOST}" "mkdir -p /home/${EC2_USER}/app/deploy/scripts"
+          scp -i deploy_key.pem -o StrictHostKeyChecking=yes deploy/docker-compose.ec2-frontend.yml "${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/app/deploy/"
+          scp -i deploy_key.pem -o StrictHostKeyChecking=yes deploy/scripts/deploy-frontend-ec2.sh "${EC2_USER}@${EC2_HOST}:/home/${EC2_USER}/app/deploy/scripts/"
+          ssh -i deploy_key.pem -o StrictHostKeyChecking=yes "${EC2_USER}@${EC2_HOST}" \
+            "export DOCKER_USERNAME='${DOCKER_USERNAME}' DOCKER_PASSWORD='${DOCKER_PASSWORD}' BACKEND_VENTAS_HOST='${BACKEND_VENTAS_HOST}' BACKEND_DESPACHO_HOST='${BACKEND_DESPACHO_HOST}' && \
+             chmod +x /home/${EC2_USER}/app/deploy/scripts/deploy-frontend-ec2.sh && \
+             /home/${EC2_USER}/app/deploy/scripts/deploy-frontend-ec2.sh"

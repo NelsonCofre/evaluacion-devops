@@ -1,0 +1,42 @@
+services:
+  ventas:
+    image: ${DOCKER_USERNAME}/ventas-service:latest
+    container_name: ventas-service
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      SPRING_PROFILES_ACTIVE: prod
+      DB_ENDPOINT: ${DB_ENDPOINT}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - ventas_logs:/app/logs
+    restart: unless-stopped
+
+  despacho:
+    image: ${DOCKER_USERNAME}/despacho-service:latest
+    container_name: despacho-service
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      SPRING_PROFILES_ACTIVE: prod
+      DB_ENDPOINT: ${DB_ENDPOINT}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - despacho_logs:/app/logs
+    depends_on:
+      - ventas
+    restart: unless-stopped
+
+volumes:
+  ventas_logs:
+    driver: local
+  despacho_logs:
+    driver: local

@@ -1,19 +1,17 @@
-# Node
-node_modules/
-dist/
+# React
+front_despacho/node_modules/
+front_despacho/dist/
 
-# Java
-target/
-build/
-*.class
+# Spring
+**/target/
 
 # IDE
-.idea/
 .vscode/
+.idea/
 
 # Variables
 .env
 
-# Sistema
+# sistema
 .DS_Store
 Thumbs.db

@@ -1,7 +1,9 @@
-target
+node_modules
+dist
 .git
 .env
+.env.*
 *.log
-.idea
 Dockerfile
 .dockerignore
+README.md

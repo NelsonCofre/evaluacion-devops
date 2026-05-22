@@ -43,14 +43,14 @@ jobs:
         env:
           SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
         run: |
-          install -m 600 -D /dev/null ~/.ssh/deploy_key.pem
-          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy_key.pem
+          printf '%s\n' "$SSH_KEY" > deploy_key.pem
+          chmod 600 deploy_key.pem
 
       - uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.EC2_FRONTEND_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key_path: ~/.ssh/deploy_key.pem
+          key_path: deploy_key.pem
           port: 22
           source: "deploy/docker-compose.ec2-frontend.yml,deploy/scripts/deploy-frontend-ec2.sh"
           target: "/home/${{ secrets.EC2_USER }}/app"
@@ -64,7 +64,7 @@ jobs:
         with:
           host: ${{ secrets.EC2_FRONTEND_HOST }}
           username: ${{ secrets.EC2_USER }}
-          key_path: ~/.ssh/deploy_key.pem
+          key_path: deploy_key.pem
           port: 22
           envs: DOCKER_USERNAME,DOCKER_PASSWORD,BACKEND_VENTAS_HOST,BACKEND_DESPACHO_HOST
           script: |

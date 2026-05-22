@@ -6,7 +6,6 @@ services:
       - "8081:8081"
     environment:
       SERVER_PORT: 8081
-      SPRING_PROFILES_ACTIVE: prod
       DB_ENDPOINT: ${DB_ENDPOINT}
       DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME}
@@ -23,7 +22,6 @@ services:
       - "8082:8082"
     environment:
       SERVER_PORT: 8082
-      SPRING_PROFILES_ACTIVE: prod
       DB_ENDPOINT: ${DB_ENDPOINT}
       DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME}
